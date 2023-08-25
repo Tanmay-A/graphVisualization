@@ -1,12 +1,21 @@
 import React, { useEffect, useState } from "react";
-import cytoscape from "cytoscape";
+import cytoscape, { Core, NodeCollection, NodeSingular } from "cytoscape";
 import "./App.css";
 
-const GraphVisualization = () => {
+interface GraphVisualizationProps {
+  cy: Core; // Define the type for the 'cy' prop
+}
+let cy: Core;
+
+const GraphVisualization: React.FC<GraphVisualizationProps> = ({
+  cy: passedCy,
+}) => {
   const [selectedConnection, setSelectedConnection] = useState<{
     source: string;
     target: string;
   } | null>(null);
+ const [cy, setCy] = useState(null);
+
 
   useEffect(() => {
     const cy = cytoscape({
@@ -54,7 +63,24 @@ const GraphVisualization = () => {
           },
         },
       ],
+      
     });
+    const layoutOptions = {
+      name: 'breadthfirst',
+      fit: true,
+      directed: false,
+      padding: 20,
+      spacingFactor: 1.25,
+      maximalAdjustments: 30,
+      animate: true,
+      animationDuration: 500,
+      avoidOverlap: true,
+      roots: '#user1',
+    };
+    
+    // Apply the layout
+    cy.layout(layoutOptions).run();
+
 
     // Expand and collapse nodes
     cy.on("tap", "node", (event: cytoscape.EventObject) => {
@@ -70,7 +96,9 @@ const GraphVisualization = () => {
     };
 
     const filterButton = document.getElementById("filterButton");
-    filterButton?.addEventListener("click", () => filterConnections("Entity C"));
+    filterButton?.addEventListener("click", () =>
+      filterConnections("Entity C")
+    );
 
     // Handle edge clicks to display connection details
     cy.on("tap", "edge", (event: cytoscape.EventObject) => {
@@ -86,15 +114,22 @@ const GraphVisualization = () => {
 
     // Cleanup event listeners when component unmounts
     return () => {
-      filterButton?.removeEventListener("click", () => filterConnections("Entity C"));
+      filterButton?.removeEventListener("click", () =>
+        filterConnections("Entity C")
+      );
       cy.off("tap", "node");
       cy.off("tap", "edge");
     };
   }, []);
+ 
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+    <div
+      style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
+    >
       <div id="cy" style={{ height: "500px", width: "100%" }} />
+
+     
       {/* Case 3: Remove & readd edges.
       In this use-case, we'll demonstrate how to use Cytoscape.js to add and remove connections based on entities on click. */}
       {selectedConnection && (
